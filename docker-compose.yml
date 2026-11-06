@@ -1,3 +1,4 @@
+
 name: skill-insem
 
 services:
@@ -9,8 +10,6 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: docker
       POSTGRES_DB: skill_exam_2400031800
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -28,8 +27,6 @@ services:
       context: ./EurekaServer
       dockerfile: Dockerfile
     container_name: eureka-server
-    ports:
-      - "8761:8761"
     restart: unless-stopped
     networks:
       - microservices-network
@@ -43,7 +40,9 @@ services:
     ports:
       - "9000:8000"
     environment:
-      EUREKA_INSTANCE_STATUSPAGEURL: http://localhost:9000/actuator/info
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_INSTANCE_STATUSPAGEURL: http://api-gateway:8000/actuator/info
+      EUREKA_INSTANCE_PREFERIPADDRESS: "true"
     depends_on:
       - eureka-server
       - user-service
@@ -59,10 +58,13 @@ services:
       context: ./UserService
       dockerfile: Dockerfile
     container_name: user-service
-    ports:
-      - "9001:8001"
     environment:
-      EUREKA_INSTANCE_STATUSPAGEURL: http://localhost:9001/actuator/info
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5432/skill_exam_2400031800
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_INSTANCE_STATUSPAGEURL: http://user-service:8001/actuator/info
+      EUREKA_INSTANCE_PREFERIPADDRESS: "true"
     depends_on:
       eureka-server:
         condition: service_started
@@ -78,10 +80,13 @@ services:
       context: ./ProductService
       dockerfile: Dockerfile
     container_name: product-service
-    ports:
-      - "9002:8002"
     environment:
-      EUREKA_INSTANCE_STATUSPAGEURL: http://localhost:9002/actuator/info
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5432/skill_exam_2400031800
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_INSTANCE_STATUSPAGEURL: http://product-service:8002/actuator/info
+      EUREKA_INSTANCE_PREFERIPADDRESS: "true"
     depends_on:
       eureka-server:
         condition: service_started
@@ -97,10 +102,13 @@ services:
       context: ./OrderService
       dockerfile: Dockerfile
     container_name: order-service
-    ports:
-      - "9003:8003"
     environment:
-      EUREKA_INSTANCE_STATUSPAGEURL: http://localhost:9003/actuator/info
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5432/skill_exam_2400031800
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_INSTANCE_STATUSPAGEURL: http://order-service:8003/actuator/info
+      EUREKA_INSTANCE_PREFERIPADDRESS: "true"
     depends_on:
       eureka-server:
         condition: service_started
