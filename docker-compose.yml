@@ -1,0 +1,118 @@
+name: skill-insem
+
+services:
+  postgresdb:
+    image: postgres:16-alpine
+    container_name: postgresdb
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: docker
+      POSTGRES_DB: skill_exam_2400031800
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d skill_exam_2400031800"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - microservices-network
+
+  eureka-server:
+    image: lohith1222/eureka-server:latest
+    build:
+      context: ./EurekaServer
+      dockerfile: Dockerfile
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    restart: unless-stopped
+    networks:
+      - microservices-network
+
+  api-gateway:
+    image: lohith1222/api-gateway:latest
+    build:
+      context: ./APIGateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "9000:8000"
+    environment:
+      EUREKA_INSTANCE_STATUSPAGEURL: http://localhost:9000/actuator/info
+    depends_on:
+      - eureka-server
+      - user-service
+      - product-service
+      - order-service
+    restart: unless-stopped
+    networks:
+      - microservices-network
+
+  user-service:
+    image: lohith1222/user-service:latest
+    build:
+      context: ./UserService
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "9001:8001"
+    environment:
+      EUREKA_INSTANCE_STATUSPAGEURL: http://localhost:9001/actuator/info
+    depends_on:
+      eureka-server:
+        condition: service_started
+      postgresdb:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - microservices-network
+
+  product-service:
+    image: lohith1222/product-service:latest
+    build:
+      context: ./ProductService
+      dockerfile: Dockerfile
+    container_name: product-service
+    ports:
+      - "9002:8002"
+    environment:
+      EUREKA_INSTANCE_STATUSPAGEURL: http://localhost:9002/actuator/info
+    depends_on:
+      eureka-server:
+        condition: service_started
+      postgresdb:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - microservices-network
+
+  order-service:
+    image: lohith1222/order-service:latest
+    build:
+      context: ./OrderService
+      dockerfile: Dockerfile
+    container_name: order-service
+    ports:
+      - "9003:8003"
+    environment:
+      EUREKA_INSTANCE_STATUSPAGEURL: http://localhost:9003/actuator/info
+    depends_on:
+      eureka-server:
+        condition: service_started
+      postgresdb:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - microservices-network
+
+volumes:
+  postgres_data:
+
+networks:
+  microservices-network:
+    driver: bridge
