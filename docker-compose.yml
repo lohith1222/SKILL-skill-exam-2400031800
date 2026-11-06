@@ -1,5 +1,5 @@
 
-name: skill-insem
+name: microservices-deployment
 
 services:
   postgresdb:
@@ -10,6 +10,8 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: docker
       POSTGRES_DB: skill_exam_2400031800
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -21,97 +23,19 @@ services:
     networks:
       - microservices-network
 
-  eureka-server:
-    image: lohith1222/eureka-server:latest
+  newspaper:
+    image: lohith1222/newspaper:latest
     build:
-      context: ./EurekaServer
+      context: ./Newspaper
       dockerfile: Dockerfile
-    container_name: eureka-server
-    restart: unless-stopped
-    networks:
-      - microservices-network
-
-  api-gateway:
-    image: lohith1222/api-gateway:latest
-    build:
-      context: ./APIGateway
-      dockerfile: Dockerfile
-    container_name: api-gateway
+    container_name: newspaper
     ports:
-      - "9000:8000"
-    environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      EUREKA_INSTANCE_STATUSPAGEURL: http://api-gateway:8000/actuator/info
-      EUREKA_INSTANCE_PREFERIPADDRESS: "true"
-    depends_on:
-      - eureka-server
-      - user-service
-      - product-service
-      - order-service
-    restart: unless-stopped
-    networks:
-      - microservices-network
-
-  user-service:
-    image: lohith1222/user-service:latest
-    build:
-      context: ./UserService
-      dockerfile: Dockerfile
-    container_name: user-service
+      - "2026:2026"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5432/skill_exam_2400031800
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      EUREKA_INSTANCE_STATUSPAGEURL: http://user-service:8001/actuator/info
-      EUREKA_INSTANCE_PREFERIPADDRESS: "true"
     depends_on:
-      eureka-server:
-        condition: service_started
-      postgresdb:
-        condition: service_healthy
-    restart: unless-stopped
-    networks:
-      - microservices-network
-
-  product-service:
-    image: lohith1222/product-service:latest
-    build:
-      context: ./ProductService
-      dockerfile: Dockerfile
-    container_name: product-service
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5432/skill_exam_2400031800
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      EUREKA_INSTANCE_STATUSPAGEURL: http://product-service:8002/actuator/info
-      EUREKA_INSTANCE_PREFERIPADDRESS: "true"
-    depends_on:
-      eureka-server:
-        condition: service_started
-      postgresdb:
-        condition: service_healthy
-    restart: unless-stopped
-    networks:
-      - microservices-network
-
-  order-service:
-    image: lohith1222/order-service:latest
-    build:
-      context: ./OrderService
-      dockerfile: Dockerfile
-    container_name: order-service
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5432/skill_exam_2400031800
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      EUREKA_INSTANCE_STATUSPAGEURL: http://order-service:8003/actuator/info
-      EUREKA_INSTANCE_PREFERIPADDRESS: "true"
-    depends_on:
-      eureka-server:
-        condition: service_started
       postgresdb:
         condition: service_healthy
     restart: unless-stopped
